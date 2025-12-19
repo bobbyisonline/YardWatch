@@ -264,13 +264,14 @@ async def get_player_info(player_id: int) -> dict:
         people = data.get("people", [])
         if people:
             player = people[0]
+            current_team = player.get("currentTeam", {})
             return {
                 "id": player.get("id"),
                 "name": player.get("fullName"),
                 "first_name": player.get("firstName"),
                 "last_name": player.get("lastName"),
-                "team": player.get("currentTeam", {}).get("name"),
-                "team_id": player.get("currentTeam", {}).get("id"),
+                "team": current_team.get("abbreviation") or current_team.get("name", ""),
+                "team_id": current_team.get("id"),
                 "position": player.get("primaryPosition", {}).get("abbreviation"),
                 "bats": player.get("batSide", {}).get("code"),
                 "throws": player.get("pitchHand", {}).get("code"),

@@ -23,11 +23,11 @@ export function ResultsTable({
           <tr>
             <th>#</th>
             <th>Batter</th>
-            <th>Team</th>
+            <th className="hide-on-mobile">Team</th>
             <th>Attack Pitch</th>
             <th>Score</th>
             <th>HR Prob</th>
-            <th>Top Reasons</th>
+            <th className="hide-on-mobile">Top Reasons</th>
           </tr>
         </thead>
         <tbody>
@@ -39,13 +39,13 @@ export function ResultsTable({
             >
               <td className="rank-cell">{idx + 1}</td>
               <td className="batter-name-cell">{pred.batterName}</td>
-              <td className="team-cell">{pred.batterTeam}</td>
+              <td className="team-cell hide-on-mobile">{pred.batterTeam}</td>
               <td className="pitch-cell">{pred.attackPitch}</td>
               <td className="score-cell">
                 <span className="score-badge">{pred.score}</span>
               </td>
               <td className="prob-cell">{formatPercent(pred.probability)}</td>
-              <td className="reasons-cell">
+              <td className="reasons-cell hide-on-mobile">
                 <ul className="reasons-list">
                   {pred.topReasons.map((reason, i) => (
                     <li key={i}>{reason}</li>
