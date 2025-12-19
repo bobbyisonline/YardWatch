@@ -4,7 +4,7 @@ Fetches and aggregates pitch-level data for pitchers and batters.
 """
 
 import pandas as pd
-from pybaseball import statcast, playerid_lookup, statcast_pitcher, statcast_batter
+from pybaseball import statcast, playerid_lookup, statcast_pitcher, statcast_batter, cache
 from cachetools import TTLCache
 from datetime import datetime, timedelta
 from typing import Optional
@@ -15,6 +15,9 @@ from app.models import PitcherProfile, PitchTypeStats, BatterProfile, BatterVsPi
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
+# Enable pybaseball caching to speed up repeated queries
+cache.enable()
 
 # In-memory caches
 _pitcher_cache: TTLCache = TTLCache(maxsize=500, ttl=settings.cache_ttl_pitchers)
@@ -428,98 +431,96 @@ async def lookup_player_id(first_name: str, last_name: str) -> Optional[int]:
 
 # ============ BATCH OPERATIONS FOR SPEED ============
 
-_season_batter_cache: dict = {}  # Cache for full season batter data
-
-
 async def get_batters_batch_fast(
     batter_ids: list[int],
     season: int = None
 ) -> list[BatterProfile]:
     """
-    Get profiles for multiple batters using cached season data.
-    Much faster than individual queries - fetches all batter data once.
+    Get profiles for multiple batters concurrently.
+    Uses per-batter queries with pybaseball caching for speed.
     """
+    import asyncio
+    import concurrent.futures
+    
     season = season or settings.current_season
-    cache_key = f"batters_season_{season}"
-    
-    # Check if we have cached season batter data
-    if cache_key not in _season_batter_cache:
-        logger.info(f"Fetching full season batter data for {season}...")
-        start_date = f"{season}-03-20"
-        end_date = f"{season}-11-05"
-        
-        today = datetime.now()
-        if season == today.year:
-            end_date = today.strftime("%Y-%m-%d")
-        
-        try:
-            # Fetch ALL statcast data for the season (this is the big call, but only once)
-            data = statcast(start_dt=start_date, end_dt=end_date)
-            if data is not None and not data.empty:
-                _season_batter_cache[cache_key] = data
-                logger.info(f"Cached {len(data)} pitches for batter lookups")
-            else:
-                logger.warning(f"No season data available for {season}")
-                return []
-        except Exception as e:
-            logger.error(f"Error fetching season data: {e}")
-            return []
-    
-    season_data = _season_batter_cache[cache_key]
     profiles = []
+    ids_to_fetch = []
     
+    # Check cache first
     for batter_id in batter_ids:
-        # Check individual cache first
-        ind_cache_key = f"batter_{batter_id}_{season}"
-        if ind_cache_key in _batter_cache:
-            profiles.append(_batter_cache[ind_cache_key])
-            continue
-        
-        # Filter season data for this batter
-        batter_data = season_data[season_data['batter'] == batter_id]
-        
-        if batter_data.empty:
-            logger.debug(f"No data for batter {batter_id} in season cache")
-            continue
-        
-        # Build profile from filtered data
-        vs_pitch_stats = _aggregate_batter_vs_pitch_types(batter_data)
-        
-        if not vs_pitch_stats:
-            continue
-        
-        # Get team info
-        team = "UNK"
-        if 'home_team' in batter_data.columns and 'away_team' in batter_data.columns:
-            if 'inning_topbot' in batter_data.columns:
-                home_abs = (batter_data['inning_topbot'] == 'Bot').sum()
-                away_abs = (batter_data['inning_topbot'] == 'Top').sum()
-                
-                if home_abs > away_abs:
-                    mode_val = batter_data[batter_data['inning_topbot'] == 'Bot']['home_team'].mode()
-                    team = mode_val.iloc[0] if not mode_val.empty else "UNK"
-                else:
-                    mode_val = batter_data[batter_data['inning_topbot'] == 'Top']['away_team'].mode()
-                    team = mode_val.iloc[0] if not mode_val.empty else "UNK"
-        
-        # Get handedness
-        bats = "R"
-        if 'stand' in batter_data.columns:
-            mode_val = batter_data['stand'].mode()
-            bats = mode_val.iloc[0] if not mode_val.empty else "R"
-        
-        profile = BatterProfile(
-            batter_id=batter_id,
-            name="Unknown",  # Will be filled by MLB API
-            team=team,
-            bats=bats,
-            vs_pitch_types=vs_pitch_stats,
-            total_pitches_seen=len(batter_data),
-            season=season
-        )
-        
-        # Cache it
-        _batter_cache[ind_cache_key] = profile
-        profiles.append(profile)
+        cache_key = f"batter_{batter_id}_{season}"
+        if cache_key in _batter_cache:
+            profiles.append(_batter_cache[cache_key])
+        else:
+            ids_to_fetch.append(batter_id)
+    
+    if not ids_to_fetch:
+        return profiles
+    
+    logger.info(f"Fetching {len(ids_to_fetch)} batters (pybaseball cached)...")
+    
+    # Fetch uncached batters using thread pool (pybaseball is sync)
+    def fetch_batter_sync(batter_id: int) -> Optional[BatterProfile]:
+        try:
+            start_date = f"{season}-03-20"
+            end_date = f"{season}-11-05"
+            
+            today = datetime.now()
+            if season == today.year:
+                end_date = today.strftime("%Y-%m-%d")
+            
+            data = statcast_batter(start_dt=start_date, end_dt=end_date, player_id=batter_id)
+            
+            if data is None or data.empty:
+                return None
+            
+            vs_pitch_stats = _aggregate_batter_vs_pitch_types(data)
+            if not vs_pitch_stats:
+                return None
+            
+            # Get team
+            team = "UNK"
+            if 'home_team' in data.columns and 'away_team' in data.columns:
+                if 'inning_topbot' in data.columns:
+                    home_abs = (data['inning_topbot'] == 'Bot').sum()
+                    away_abs = (data['inning_topbot'] == 'Top').sum()
+                    if home_abs > away_abs:
+                        mode_val = data[data['inning_topbot'] == 'Bot']['home_team'].mode()
+                        team = mode_val.iloc[0] if not mode_val.empty else "UNK"
+                    else:
+                        mode_val = data[data['inning_topbot'] == 'Top']['away_team'].mode()
+                        team = mode_val.iloc[0] if not mode_val.empty else "UNK"
+            
+            # Get handedness
+            bats = "R"
+            if 'stand' in data.columns:
+                mode_val = data['stand'].mode()
+                bats = mode_val.iloc[0] if not mode_val.empty else "R"
+            
+            return BatterProfile(
+                batter_id=batter_id,
+                name="Unknown",
+                team=team,
+                bats=bats,
+                vs_pitch_types=vs_pitch_stats,
+                total_pitches_seen=len(data),
+                season=season
+            )
+        except Exception as e:
+            logger.error(f"Error fetching batter {batter_id}: {e}")
+            return None
+    
+    # Run in thread pool (3 concurrent to avoid overwhelming Baseball Savant)
+    loop = asyncio.get_event_loop()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        futures = [loop.run_in_executor(executor, fetch_batter_sync, bid) for bid in ids_to_fetch]
+        results = await asyncio.gather(*futures)
+    
+    # Cache and collect results
+    for batter_id, profile in zip(ids_to_fetch, results):
+        if profile:
+            cache_key = f"batter_{batter_id}_{season}"
+            _batter_cache[cache_key] = profile
+            profiles.append(profile)
     
     return profiles
