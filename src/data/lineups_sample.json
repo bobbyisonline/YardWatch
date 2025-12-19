@@ -1,0 +1,50 @@
+[
+  {
+    "gameId": "G001",
+    "gameDate": "2025-06-15",
+    "homeTeam": {
+      "teamId": "NYY",
+      "teamName": "New York Yankees",
+      "startingPitcherId": "P001",
+      "lineup": ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009"]
+    },
+    "awayTeam": {
+      "teamId": "LAD",
+      "teamName": "Los Angeles Dodgers",
+      "startingPitcherId": "P004",
+      "lineup": ["B010", "B011", "B012", "B013", "B014", "B015", "B016", "B017", "B018"]
+    }
+  },
+  {
+    "gameId": "G002",
+    "gameDate": "2025-06-16",
+    "homeTeam": {
+      "teamId": "LAD",
+      "teamName": "Los Angeles Dodgers",
+      "startingPitcherId": "P003",
+      "lineup": ["B010", "B011", "B012", "B013", "B014", "B015", "B016", "B017", "B019"]
+    },
+    "awayTeam": {
+      "teamId": "NYY",
+      "teamName": "New York Yankees",
+      "startingPitcherId": "P002",
+      "lineup": ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009"]
+    }
+  },
+  {
+    "gameId": "G003",
+    "gameDate": "2025-06-17",
+    "homeTeam": {
+      "teamId": "LAD",
+      "teamName": "Los Angeles Dodgers",
+      "startingPitcherId": "P004",
+      "lineup": ["B010", "B011", "B012", "B013", "B014", "B015", "B020", "B017", "B019"]
+    },
+    "awayTeam": {
+      "teamId": "NYY",
+      "teamName": "New York Yankees",
+      "startingPitcherId": "P001",
+      "lineup": ["B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008", "B009"]
+    }
+  }
+]

@@ -1,0 +1,130 @@
+[
+  {
+    "pitcherId": "P001",
+    "pitcherName": "Gerrit Cole",
+    "pitchType": "Fastball",
+    "usage": 0.42,
+    "pitchRV": 2.1,
+    "pitchHRRate": 0.028
+  },
+  {
+    "pitcherId": "P001",
+    "pitcherName": "Gerrit Cole",
+    "pitchType": "Slider",
+    "usage": 0.28,
+    "pitchRV": -3.5,
+    "pitchHRRate": 0.022
+  },
+  {
+    "pitcherId": "P001",
+    "pitcherName": "Gerrit Cole",
+    "pitchType": "Curveball",
+    "usage": 0.18,
+    "pitchRV": 1.2,
+    "pitchHRRate": 0.015
+  },
+  {
+    "pitcherId": "P001",
+    "pitcherName": "Gerrit Cole",
+    "pitchType": "Changeup",
+    "usage": 0.12,
+    "pitchRV": -1.8,
+    "pitchHRRate": 0.035
+  },
+  {
+    "pitcherId": "P002",
+    "pitcherName": "Corbin Burnes",
+    "pitchType": "Sinker",
+    "usage": 0.35,
+    "pitchRV": 1.5,
+    "pitchHRRate": 0.018
+  },
+  {
+    "pitcherId": "P002",
+    "pitcherName": "Corbin Burnes",
+    "pitchType": "Cutter",
+    "usage": 0.32,
+    "pitchRV": -4.2,
+    "pitchHRRate": 0.042
+  },
+  {
+    "pitcherId": "P002",
+    "pitcherName": "Corbin Burnes",
+    "pitchType": "Slider",
+    "usage": 0.20,
+    "pitchRV": 0.8,
+    "pitchHRRate": 0.020
+  },
+  {
+    "pitcherId": "P002",
+    "pitcherName": "Corbin Burnes",
+    "pitchType": "Curveball",
+    "usage": 0.13,
+    "pitchRV": -0.5,
+    "pitchHRRate": 0.025
+  },
+  {
+    "pitcherId": "P003",
+    "pitcherName": "Zack Wheeler",
+    "pitchType": "Fastball",
+    "usage": 0.48,
+    "pitchRV": 3.2,
+    "pitchHRRate": 0.024
+  },
+  {
+    "pitcherId": "P003",
+    "pitcherName": "Zack Wheeler",
+    "pitchType": "Slider",
+    "usage": 0.25,
+    "pitchRV": -2.8,
+    "pitchHRRate": 0.030
+  },
+  {
+    "pitcherId": "P003",
+    "pitcherName": "Zack Wheeler",
+    "pitchType": "Curveball",
+    "usage": 0.15,
+    "pitchRV": 0.5,
+    "pitchHRRate": 0.018
+  },
+  {
+    "pitcherId": "P003",
+    "pitcherName": "Zack Wheeler",
+    "pitchType": "Changeup",
+    "usage": 0.12,
+    "pitchRV": -1.2,
+    "pitchHRRate": null
+  },
+  {
+    "pitcherId": "P004",
+    "pitcherName": "Logan Webb",
+    "pitchType": "Sinker",
+    "usage": 0.40,
+    "pitchRV": 2.5,
+    "pitchHRRate": 0.015
+  },
+  {
+    "pitcherId": "P004",
+    "pitcherName": "Logan Webb",
+    "pitchType": "Changeup",
+    "usage": 0.30,
+    "pitchRV": -5.1,
+    "pitchHRRate": 0.045
+  },
+  {
+    "pitcherId": "P004",
+    "pitcherName": "Logan Webb",
+    "pitchType": "Slider",
+    "usage": 0.18,
+    "pitchRV": -0.8,
+    "pitchHRRate": 0.028
+  },
+  {
+    "pitcherId": "P004",
+    "pitcherName": "Logan Webb",
+    "pitchType": "Curveball",
+    "usage": 0.12,
+    "pitchRV": 0.3,
+    "pitchHRRate": 0.012
+  }
+]
