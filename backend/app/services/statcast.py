@@ -424,3 +424,102 @@ async def lookup_player_id(first_name: str, last_name: str) -> Optional[int]:
     except Exception as e:
         logger.error(f"Error looking up player {first_name} {last_name}: {e}")
         return None
+
+
+# ============ BATCH OPERATIONS FOR SPEED ============
+
+_season_batter_cache: dict = {}  # Cache for full season batter data
+
+
+async def get_batters_batch_fast(
+    batter_ids: list[int],
+    season: int = None
+) -> list[BatterProfile]:
+    """
+    Get profiles for multiple batters using cached season data.
+    Much faster than individual queries - fetches all batter data once.
+    """
+    season = season or settings.current_season
+    cache_key = f"batters_season_{season}"
+    
+    # Check if we have cached season batter data
+    if cache_key not in _season_batter_cache:
+        logger.info(f"Fetching full season batter data for {season}...")
+        start_date = f"{season}-03-20"
+        end_date = f"{season}-11-05"
+        
+        today = datetime.now()
+        if season == today.year:
+            end_date = today.strftime("%Y-%m-%d")
+        
+        try:
+            # Fetch ALL statcast data for the season (this is the big call, but only once)
+            data = statcast(start_dt=start_date, end_dt=end_date)
+            if data is not None and not data.empty:
+                _season_batter_cache[cache_key] = data
+                logger.info(f"Cached {len(data)} pitches for batter lookups")
+            else:
+                logger.warning(f"No season data available for {season}")
+                return []
+        except Exception as e:
+            logger.error(f"Error fetching season data: {e}")
+            return []
+    
+    season_data = _season_batter_cache[cache_key]
+    profiles = []
+    
+    for batter_id in batter_ids:
+        # Check individual cache first
+        ind_cache_key = f"batter_{batter_id}_{season}"
+        if ind_cache_key in _batter_cache:
+            profiles.append(_batter_cache[ind_cache_key])
+            continue
+        
+        # Filter season data for this batter
+        batter_data = season_data[season_data['batter'] == batter_id]
+        
+        if batter_data.empty:
+            logger.debug(f"No data for batter {batter_id} in season cache")
+            continue
+        
+        # Build profile from filtered data
+        vs_pitch_stats = _aggregate_batter_vs_pitch_types(batter_data)
+        
+        if not vs_pitch_stats:
+            continue
+        
+        # Get team info
+        team = "UNK"
+        if 'home_team' in batter_data.columns and 'away_team' in batter_data.columns:
+            if 'inning_topbot' in batter_data.columns:
+                home_abs = (batter_data['inning_topbot'] == 'Bot').sum()
+                away_abs = (batter_data['inning_topbot'] == 'Top').sum()
+                
+                if home_abs > away_abs:
+                    mode_val = batter_data[batter_data['inning_topbot'] == 'Bot']['home_team'].mode()
+                    team = mode_val.iloc[0] if not mode_val.empty else "UNK"
+                else:
+                    mode_val = batter_data[batter_data['inning_topbot'] == 'Top']['away_team'].mode()
+                    team = mode_val.iloc[0] if not mode_val.empty else "UNK"
+        
+        # Get handedness
+        bats = "R"
+        if 'stand' in batter_data.columns:
+            mode_val = batter_data['stand'].mode()
+            bats = mode_val.iloc[0] if not mode_val.empty else "R"
+        
+        profile = BatterProfile(
+            batter_id=batter_id,
+            name="Unknown",  # Will be filled by MLB API
+            team=team,
+            bats=bats,
+            vs_pitch_types=vs_pitch_stats,
+            total_pitches_seen=len(batter_data),
+            season=season
+        )
+        
+        # Cache it
+        _batter_cache[ind_cache_key] = profile
+        profiles.append(profile)
+    
+    return profiles

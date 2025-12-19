@@ -284,6 +284,46 @@ async def get_player_info(player_id: int) -> dict:
         return {}
 
 
+async def get_players_info_batch(player_ids: list[int]) -> dict[int, dict]:
+    """
+    Get player details for multiple players in one request.
+    MLB API supports comma-separated IDs.
+    """
+    if not player_ids:
+        return {}
+    
+    # MLB API supports up to ~50 IDs per request
+    ids_str = ",".join(str(pid) for pid in player_ids)
+    url = f"{MLB_API_BASE}/people?personIds={ids_str}"
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, timeout=20.0)
+            response.raise_for_status()
+            data = response.json()
+        
+        result = {}
+        for player in data.get("people", []):
+            current_team = player.get("currentTeam", {})
+            result[player.get("id")] = {
+                "id": player.get("id"),
+                "name": player.get("fullName"),
+                "first_name": player.get("firstName"),
+                "last_name": player.get("lastName"),
+                "team": current_team.get("abbreviation") or current_team.get("name", ""),
+                "team_id": current_team.get("id"),
+                "position": player.get("primaryPosition", {}).get("abbreviation"),
+                "bats": player.get("batSide", {}).get("code"),
+                "throws": player.get("pitchHand", {}).get("code"),
+            }
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error fetching players batch: {e}")
+        return {}
+
+
 async def search_players(query: str) -> list[dict]:
     """Search for players by name."""
     url = f"{MLB_API_BASE}/sports/1/players"

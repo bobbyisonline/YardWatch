@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 
-from app.services import get_batter_profile, lookup_player_id, get_player_info
+from app.services import get_batter_profile, get_batters_batch_fast, lookup_player_id, get_player_info, get_players_info_batch
 from app.models import BatterProfile
 from app.config import get_settings
 
@@ -111,30 +111,27 @@ async def get_batters_batch(
     """
     Get profiles for multiple batters at once.
     Useful for fetching entire lineup data.
-    Fetches batters concurrently for better performance.
+    Uses cached season data for much faster performance.
     """
-    import asyncio
-    
     season = season or settings.current_season
     
-    async def fetch_batter(batter_id: int):
-        try:
-            profile = await get_batter_profile(batter_id, season)
-            if profile:
-                # Get name from MLB API
-                player_info = await get_player_info(batter_id)
-                if player_info:
-                    profile.name = player_info.get("name", profile.name)
-                    profile.team = player_info.get("team", profile.team)
-                return profile
-        except Exception as e:
-            # Log but don't fail the batch
-            print(f"Error fetching batter {batter_id}: {e}")
-        return None
+    # Use fast batch function that uses cached season data
+    profiles = await get_batters_batch_fast(batter_ids, season)
     
-    # Fetch all batters concurrently
-    tasks = [fetch_batter(batter_id) for batter_id in batter_ids]
-    profiles = await asyncio.gather(*tasks)
+    if not profiles:
+        return []
     
-    # Filter out None results
-    return [p for p in profiles if p is not None]
+    # Get all player info in one batch call
+    profile_ids = [p.batter_id for p in profiles]
+    player_infos = await get_players_info_batch(profile_ids)
+    
+    # Update profiles with names and teams
+    for profile in profiles:
+        info = player_infos.get(profile.batter_id, {})
+        if info:
+            profile.name = info.get("name", profile.name)
+            profile.team = info.get("team", profile.team)
+            if info.get("bats"):
+                profile.bats = info.get("bats")
+    
+    return profiles
