@@ -13,19 +13,16 @@ export function Toggles({
 }: TogglesProps) {
   return (
     <div className="toggles-container">
-      <div className="control-group toggle-group">
-        <label htmlFor="hr-factors-toggle" className="toggle-label">
-          <input
-            type="checkbox"
-            id="hr-factors-toggle"
-            checked={useHrFactors}
-            onChange={(e) => onToggleHrFactors(e.target.checked)}
-          />
-          <span>Use HR Factors</span>
-        </label>
-        <span className="toggle-hint">
-          {useHrFactors ? 'Including pitcher/batter HR rates' : 'Base interaction only'}
-        </span>
+      <div className="toggle-card" onClick={() => onToggleHrFactors(!useHrFactors)}>
+        <div className="toggle-card-content">
+          <span className="toggle-card-title">Use HR Factors</span>
+          <span className="toggle-card-desc">
+            {useHrFactors ? 'Including pitcher/batter HR rates' : 'Base interaction only'}
+          </span>
+        </div>
+        <div className={`toggle-switch ${useHrFactors ? 'active' : ''}`}>
+          <div className="toggle-switch-knob" />
+        </div>
       </div>
 
       <div className="control-group">

@@ -27,15 +27,15 @@ export function AttackPitchCard({ attackPitch, isLoading }: AttackPitchCardProps
   return (
     <div className="attack-pitch-info">
       <div className="attack-pitch-content">
-        <span className="attack-pitch-label">Attack Pitch:</span>
+        <span className="attack-pitch-label">Attack</span>
         <span className="attack-pitch-value">{attackPitch.attack_pitch_name}</span>
       </div>
       <div className="attack-pitch-details">
         <span className="attack-pitch-stat">
-          Usage: {attackPitch.usage_pct.toFixed(1)}%
+          <strong>{attackPitch.usage_pct.toFixed(1)}%</strong> usage
         </span>
         <span className="attack-pitch-stat">
-          RV/100: {attackPitch.run_value_per_100.toFixed(2)}
+          <strong>{attackPitch.run_value_per_100.toFixed(2)}</strong> RV/100
         </span>
       </div>
     </div>
