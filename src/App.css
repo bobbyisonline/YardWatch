@@ -292,58 +292,51 @@ input[type="range"]::-webkit-slider-thumb:hover {
   transform: translateX(18px);
 }
 
-/* Attack Pitch Info Card */
-.attack-pitch-info {
+/* Attack Pitch Card - Badge Style */
+.attack-pitch-card {
   margin-top: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(239, 68, 68, 0.08) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  padding: 0.75rem;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+}
+
+.attack-pitch-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-}
-
-.attack-pitch-info::before {
-  content: '🎯';
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
-
-.attack-pitch-content {
-  display: flex;
-  align-items: baseline;
+  justify-content: space-between;
   gap: 0.5rem;
-  flex-shrink: 0;
 }
 
 .attack-pitch-label {
-  font-size: 0.65rem;
-  color: var(--color-text-muted);
-  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--color-text);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.attack-pitch-value {
-  font-size: 0.9rem;
+  letter-spacing: 0.05em;
   font-weight: 700;
-  color: var(--color-warning);
 }
 
-.attack-pitch-details {
+.attack-pitch-badge {
+  background: linear-gradient(135deg, var(--color-warning) 0%, #e85d04 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+}
+
+.attack-pitch-stats {
   display: flex;
-  gap: 0.75rem;
-  margin-left: auto;
-}
-
-.attack-pitch-stat {
+  gap: 1rem;
+  margin-top: 0.5rem;
   font-size: 0.7rem;
   color: var(--color-text-secondary);
 }
 
-.attack-pitch-stat strong {
-  color: var(--color-text);
+.attack-pitch-loading {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-style: italic;
 }
 
 /* Results Panel */
